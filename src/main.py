@@ -111,74 +111,77 @@ if all(orig_point) and number>0:
     for i in range(number):
         coordinates[orig_point_name[i]] = {"Latitude": Latitude[i], "Longitude": Longitude[i], "colour": "#4CBB17"}
     
-    # create meetpoint clas to make the calculations
-    MP = Meetpoint(orig_points=coordinates, distance=distance, tags=tags)
+    try:
+        # create meetpoint clas to make the calculations
+        MP = Meetpoint(orig_points=coordinates, distance=distance, tags=tags)
+            
+        calculate = st.button("Calculate", on_click=MP.calculate())
         
-    calculate = st.button("Calculate", on_click=MP.calculate())
-    
-    if calculate:
+        if calculate:
 
-        # meetpoint
-        #mp1 = meetpoint([(l[0], l[1]) for l in list(zip(Latitude, Longitude))])
-        #coordinates['meetpoint1'] = {"Latitude": mp1[0], "Longitude": mp1[1], "colour":"#ff0033"}
-        
-        MP.calculate()
-        
-        if MP.pois is None:
-            # pois is None when not found
-            st.warning(f'{chosen_tag} not found closer than {distance} from meetpoint!')
-        else:
-            if MP.tries > 1:
-                st.text(f'{MP.tries} km added to the radius of searching to find a {MP.tags}')
+            # meetpoint
+            #mp1 = meetpoint([(l[0], l[1]) for l in list(zip(Latitude, Longitude))])
+            #coordinates['meetpoint1'] = {"Latitude": mp1[0], "Longitude": mp1[1], "colour":"#ff0033"}
             
-            # Coloured map with points of interest
-            st.subheader('Map with points of interest')
+            MP.calculate()
             
-            col1, col2 = st.columns([0.7,0.3])
-            
-            with col1:
-   
-                m = folium.Map(location=[coordinates['meetpoint']['Latitude'], coordinates['meetpoint']['Longitude']], zoom_start=10)
-            
-                folium.Circle(location=[coordinates['meetpoint']['Latitude'], coordinates['meetpoint']['Longitude']],
-                            radius=distance, opacity=0.6, fill=True).add_to(m)
+            if MP.pois is None:
+                # pois is None when not found
+                st.warning(f'{chosen_tag} not found closer than {distance} from meetpoint!')
+            else:
+                if MP.tries > 1:
+                    st.text(f'{MP.tries} km added to the radius of searching to find a {MP.tags}')
                 
-                for i, p in tqdm(MP.pois.iterrows()):
-                    folium.Marker(location=[float(p['Latitude']),float(p['Longitude'])], 
-                                tooltip=folium.Tooltip(p['name'], permanent=True)).add_to(m)
+                # Coloured map with points of interest
+                st.subheader('Map with points of interest')
                 
-                    for k, v in coordinates.items():
-                        if 'meet' not in k:
-                            color='green'
-                            icon_='bookmark'
-                        else:
-                            color='purple'
-                            icon_='flag'
-                            
-                        folium.Marker(location=[float(v['Latitude']), float(v['Longitude'])],
-                                    tooltip=folium.Tooltip(k, permanent=True), 
-                                    icon=folium.Icon(icon=icon_, color=color)).add_to(m)
+                col1, col2 = st.columns([0.7,0.3])
                 
-                map_a = folium_static(m, width=int(page_width*0.8), height=800)
+                with col1:
+    
+                    m = folium.Map(location=[coordinates['meetpoint']['Latitude'], coordinates['meetpoint']['Longitude']], zoom_start=10)
+                
+                    folium.Circle(location=[coordinates['meetpoint']['Latitude'], coordinates['meetpoint']['Longitude']],
+                                radius=distance, opacity=0.6, fill=True).add_to(m)
+                    
+                    for i, p in tqdm(MP.pois.iterrows()):
+                        folium.Marker(location=[float(p['Latitude']),float(p['Longitude'])], 
+                                    tooltip=folium.Tooltip(p['name'], permanent=True)).add_to(m)
+                    
+                        for k, v in coordinates.items():
+                            if 'meet' not in k:
+                                color='green'
+                                icon_='bookmark'
+                            else:
+                                color='purple'
+                                icon_='flag'
+                                
+                            folium.Marker(location=[float(v['Latitude']), float(v['Longitude'])],
+                                        tooltip=folium.Tooltip(k, permanent=True), 
+                                        icon=folium.Icon(icon=icon_, color=color)).add_to(m)
+                    
+                    map_a = folium_static(m, width=int(page_width*0.8), height=800)
+                
+                with col2:
+                    st.table(MP.fairness.rename(columns={'name': chosen_tag.upper()}).set_index(chosen_tag.upper()).sort_values(by='Inquity'))
             
-            with col2:
-                st.table(MP.fairness.rename(columns={'name': chosen_tag.upper()}).set_index(chosen_tag.upper()).sort_values(by='Inquity'))
-        
-        with st.expander("Details"):
-        
-            col1, col2 = st.columns(2)
+            with st.expander("Details"):
             
-            # table showing data
-            df = pd.DataFrame(coordinates).transpose()
-            
-            with col1:
-                st.table(df[['Latitude','Longitude']])
-                st.table(MP.distances.rename(columns={'name':chosen_tag.upper()}).set_index(chosen_tag.upper()))
-            
-            with col2:
-                # map for coordinates points
-                map1 = st.map(df, latitude='Latitude', longitude='Longitude', size=20, color='colour')
-            
-                print('Meetpoint spherical:')
-                for k,v in coordinates.items():
-                    distance_from_ref(k, (v['Latitude'], v['Longitude']), (coordinates['meetpoint']['Latitude'], coordinates['meetpoint']['Longitude']))
+                col1, col2 = st.columns(2)
+                
+                # table showing data
+                df = pd.DataFrame(coordinates).transpose()
+                
+                with col1:
+                    st.table(df[['Latitude','Longitude']])
+                    st.table(MP.distances.rename(columns={'name':chosen_tag.upper()}).set_index(chosen_tag.upper()))
+                
+                with col2:
+                    # map for coordinates points
+                    map1 = st.map(df, latitude='Latitude', longitude='Longitude', size=20, color='colour')
+                
+                    print('Meetpoint spherical:')
+                    for k,v in coordinates.items():
+                        distance_from_ref(k, (v['Latitude'], v['Longitude']), (coordinates['meetpoint']['Latitude'], coordinates['meetpoint']['Longitude']))
+    except Exception:
+        st.warning('Try a different tag place, please :)')
