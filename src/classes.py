@@ -17,10 +17,12 @@ class Meetpoint():
         self.number = len(orig_points)
         self.distance = distance
         self.tags = tags
+        self.tries_list = []
         
     def calculate(self):
         self.coordinates['meetpoint'] = self.mean_point()
         self.pois = self.get_pois()
+        self.tries = max(self.tries_list)
         self.distances = self.get_distances()
         self.fairness = self.inquity()
         
@@ -94,6 +96,7 @@ class Meetpoint():
         except Exception: # KeyError or osmnx._errors.InsufficientResponseError:
             self.distance = self.distance + 1000
             result = self.get_pois(count=count+1)
+            self.tries_list.append(count)
             
         return result
     

@@ -128,6 +128,9 @@ if all(orig_point) and number>0:
             # pois is None when not found
             st.warning(f'{chosen_tag} not found closer than {distance} from meetpoint!')
         else:
+            if MP.tries > 15:
+                st.text(f'{MP.tries} km added to the radius of searching to find a {MP.tags}')
+            
             # Coloured map with points of interest
             st.subheader('Map with points of interest')
             
