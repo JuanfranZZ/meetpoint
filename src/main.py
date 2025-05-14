@@ -86,7 +86,7 @@ if all(orig_point) and number>0:
         if chosen_category == k:
             list_tags = v
         
-    chosen_tag = st.selectbox('Choose your tag', list_tags)
+    chosen_tag = st.selectbox('Choose your tag', list_tags.sort())
     
     # Define tags to search
     tags = {chosen_category: chosen_tag}
